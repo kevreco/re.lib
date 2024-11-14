@@ -1,0 +1,32 @@
+name: builds
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: tests-msvc
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          cl.exe ./tests/main.c
+          main.exe
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: tests-gcc
+        shell: bash
+        run: |
+          cc ./tests/main.c -o main.bin
+          ./main.bin
