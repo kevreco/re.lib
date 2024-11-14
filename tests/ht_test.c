@@ -1,5 +1,4 @@
-#include "assert.h"
-#include "string.h"
+#include "ht_test.h"
 
 #include "runit.h"
 
@@ -15,71 +14,49 @@ int ht_test()
     return runit_fail == 0;
 }
 
-struct key {
-    char i;
+struct item {
+    char key;
+    float value;
 };
 
-struct value {
-    float f;
-};
-
-struct pair {
-    struct key key;
- 
-    struct value value;
-};
-
-static ht_bool items_are_same(struct pair* a, struct pair* b)
+static ht_bool items_are_same(struct item* left, struct item* right)
 {
-    return a->key.i == b->key.i;
+    return left->key == right->key;
 }
 
-static void swap_items(struct pair* a, struct pair* b)
+static void swap_items(struct item* left, struct item* right)
 {
-    struct pair tmp = *a;
-    *a = *b;
-    *b = tmp;
+    struct item tmp = *left;
+    *left = *right;
+    *right = tmp;
 }
 
-static ht_hash_t hash(void* key)
+/* Dummy hash method to similate collision */
+static ht_hash_t hash(struct item* i)
 {
-    const char* key_ptr = key;
-    char k = *key_ptr;
-
-    static struct
+    switch(i->key)
     {
-        char k; ht_hash_t h;
-    } map[] =
-    {
-        {'a', 0},
-        {'b', 0},
-        {'c', 0},
-        {'d', 1},
-        {'e', 1},
-        {'f', 1},
-        {'g', 1},
-        {'h', 1},
-        {'i', 1},
-        {'j', 2},
-        {'k', 2},
-        {'l', 2}
-    };
-
-    for (int i = 0; i < 12; ++i)
-    {
-        if (k == map[i].k)
-            return  map[i].h;
+    case 'a':
+    case 'b':
+        return 0;
+    case 'c':
+        return 1;
+    default: 
+        return 99;
     }
-
-    return 5;
 }
 
 static void ht_tests()
 {
     ht ht;
-    ht_init(&ht, sizeof(struct pair), hash, items_are_same, swap_items, 0);
+    ht_init(&ht,
+        sizeof(struct item),
+        (ht_hash_function_t)hash,
+        (ht_predicate_t)items_are_same,
+        (ht_swap_function_t)swap_items,
+    0);
 
-    struct pair data[] = {
+    struct item data[] = {
         {'a', 3.14f},
         {'b', 6.28f},
         {'c', -3.14f}
@@ -92,50 +69,50 @@ static void ht_tests()
 
     for (int i = 0; i < 3; ++i)
     {
-        struct pair expect = data[i];
-        struct pair res = { 0 };
+        struct item expect = data[i];
+        struct item res = { 0 };
         RUNIT_ASSERT(ht_contains(&ht, &expect));
         RUNIT_ASSERT(ht_get(&ht, &expect, &res));
-        RUNIT_ASSERT(res.value.f == expect.value.f);
+        RUNIT_ASSERT(res.value == expect.value);
     }
 
     RUNIT_ASSERT(!ht_is_empty(&ht));
     RUNIT_ASSERT(ht_size(&ht) == 3);
 
-    struct pair not_expected = { 0, 0 };
-    struct pair res = { 0, 0 };
+    struct item not_expected = { 0, 0 };
+    struct item res = { 0, 0 };
     RUNIT_ASSERT(!ht_contains(&ht, &not_expected));
     RUNIT_ASSERT(!ht_get(&ht, &not_expected, &res));
 
-    struct key expected = { 'a' };
-    RUNIT_ASSERT(ht_erase(&ht, &expected));
-    not_expected.key.i = 'a'; // not expected since it has been removed
-    RUNIT_ASSERT(!ht_erase(&ht, &not_expected));
-    RUNIT_ASSERT(!ht_is_empty(&ht));
-    RUNIT_ASSERT(ht_size(&ht) == 2);
+    /* Erase one items */
+    {
+        struct item expected = { 'a' };
+        RUNIT_ASSERT(ht_erase(&ht, &expected));
+        not_expected.key = 'a'; /* Not expected since it has been removed */
+        RUNIT_ASSERT(!ht_erase(&ht, &not_expected));
+        RUNIT_ASSERT(!ht_is_empty(&ht));
+        RUNIT_ASSERT(ht_size(&ht) == 2);
+    }
 
-    // remove all
+    /* Remove all items. */
     for (int i = 0; i < 3; ++i)
     {
         ht_erase(&ht, &data[i]);
     }
-    not_expected.key.i = 'a'; // not expected since it has been removed
+    
+    not_expected.key = 'a'; /* Not expected since it has been removed */
     RUNIT_ASSERT(!ht_contains(&ht, &not_expected));
-    not_expected.key.i = 'b';
+    not_expected.key = 'b';
     RUNIT_ASSERT(!ht_contains(&ht, &not_expected));
-    not_expected.key.i = 'c';
+    not_expected.key = 'c';
     RUNIT_ASSERT(!ht_contains(&ht, &not_expected));
     RUNIT_ASSERT(ht_size(&ht) == 0);
 
-    // clear
+    /* Clear items */
+    for (int i = 0; i < 3; ++i)
     {
-        for (int i = 0; i < 3; ++i)
-        {
-            ht_insert(&ht, &data[i]);
-        }
-        ht_clear(&ht);
-        RUNIT_ASSERT(ht_size(&ht) == 0);
-
+        ht_insert(&ht, &data[i]);
     }
-
+    ht_clear(&ht);
+    RUNIT_ASSERT(ht_size(&ht) == 0);
 }
