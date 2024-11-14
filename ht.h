@@ -77,6 +77,7 @@ EXAMPLE:
 #define RE_HT_H
 
 #include <stddef.h> /* size_t */
+#include <stdint.h> /* intptr_t */
 
 /* Hash Table */
 
