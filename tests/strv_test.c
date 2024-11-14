@@ -118,7 +118,7 @@ static void strv_trimmed_test() {
 }
 
 /* Shorter alias. */
-static static strv strv_from_str(const char* str)
+static strv strv_from_str(const char* str)
 {
     return strv_make_from_str(str);
 }
