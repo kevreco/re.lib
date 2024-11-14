@@ -2,9 +2,6 @@
 
 #include "runit.h"
 
-#include "string.h"
-#include "assert.h"
-
 #define RE_DARR_MAP_IMPLEMENTATION
 #include "../darr_map.h"
 
@@ -24,64 +21,65 @@ static void darr_map_tests() {
     darr_map_insert_and_erase_test();
 }
 
-typedef struct darr_map_test_pair darr_map_test_pair;
-struct darr_map_test_pair {
+typedef struct map_item map_item;
+struct map_item {
     int key;
     int value;
 };
 
-static int darr_map_test_less_pair(const darr_map_test_pair* left, const darr_map_test_pair* right)
+static int map_item_less(const map_item* left, const map_item* right)
 {
     return (left->key < right->key);
 }
 
 static void darr_map_insert_and_erase_test()
 {
-    typedef darr_map_test_pair pair;
+    darr_map map;
+    darr_map_init(&map, sizeof(map_item), (darr_predicate_t)map_item_less);
+
+    for (int i = 0; i < 10; i += 2)
+    {
+        map_item item = { i, i + 1 };
+        RUNIT_ASSERT(darr_map_set(&map, &item));
+        /* Replace value with the same value, it should not return true. */
+        RUNIT_ASSERT(!darr_map_set(&map, &item)); 
+    }
+
+    RUNIT_ASSERT(darr_map_size(&map) == 5);
+
+    /* Check existence of all items. */
+    for (int i = 0; i < 10; i += 2)
+    {
+        map_item item = { i, 0 };
+        RUNIT_ASSERT(darr_map_contains(&map, &item));
+    }
 
     {
-        darr_map map;
-        darr_map_init(&map, sizeof(pair), (darr_predicate_t)darr_map_test_less_pair);
+        map_item item;
 
-        for (int i = 0; i < 10; i += 2)
-        {
-            pair pair = { i, i + 1 };
-            RUNIT_ASSERT(darr_map_set(&map, &pair));
-            RUNIT_ASSERT(!darr_map_set(&map, &pair)); /* replace value with the same value, it should not return true */
-        }
+        item.key = 8;
+        RUNIT_ASSERT(darr_map_remove(&map, &item)); 
 
-        RUNIT_ASSERT(darr_map_size(&map) == 5);
-
-        for (int i = 0; i < 10; i += 2)
-        {
-            pair pair = { i, 0 };
-            RUNIT_ASSERT(darr_map_contains(&map, &pair));
-        }
-
-        {
-            pair item;
-
-            item.key = 8;
-            RUNIT_ASSERT(darr_map_remove(&map, &item)); 
-
-            RUNIT_ASSERT(darr_map_size(&map) == 4);
-            item.key = -1;
-            RUNIT_ASSERT(!darr_map_remove(&map, &item)); /* Returns false, no items was removed. */
-            RUNIT_ASSERT(darr_map_size(&map) == 4);
-        }
-
-        /* Add 5 more items. */
-        for (int i = 10; i < 20; i += 2)
-        {
-            pair item = { i, i + 1};
-
-            RUNIT_ASSERT(darr_map_set(&map, &item));
-            RUNIT_ASSERT(!darr_map_set(&map, &item)); // replace value with the same value, it should not return true
-            RUNIT_ASSERT(darr_map_contains(&map, &item));
-        };
-
-        RUNIT_ASSERT(darr_map_size(&map) == 9);
-
-        darr_map_destroy(&map);
+        RUNIT_ASSERT(darr_map_size(&map) == 4);
+        item.key = -1;
+        
+        /* Returns false, no items was removed. */
+        RUNIT_ASSERT(!darr_map_remove(&map, &item)); 
+        RUNIT_ASSERT(darr_map_size(&map) == 4);
     }
+
+    /* Add 5 more items. */
+    for (int i = 10; i < 20; i += 2)
+    {
+        map_item item = { i, i + 1};
+
+        RUNIT_ASSERT(darr_map_set(&map, &item));
+        /* replace value with the same value, it should not return true. */
+        RUNIT_ASSERT(!darr_map_set(&map, &item)); 
+        RUNIT_ASSERT(darr_map_contains(&map, &item));
+    };
+
+    RUNIT_ASSERT(darr_map_size(&map) == 9);
+
+    darr_map_destroy(&map);
 }
