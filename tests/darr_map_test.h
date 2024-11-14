@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-bool darr_map_test();
+int darr_map_test();
 
 #ifdef __cplusplus
 } /* extern "C" */
