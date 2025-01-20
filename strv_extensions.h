@@ -29,6 +29,11 @@ STRV_API strv strv_get_surrounding_lines(strv source, size_t pos, size_t extra_l
 */
 STRV_API bool strv_is_email(strv sv);
 
+/* Compare two string views as if all new lines (\r, \n, and \r\n) were the same
+   NOTE: string views are assumed to be null terminated. */
+STRV_API bool
+strv_equals_newline_insensitive(strv left_str, strv right_str);
+
 /*-----------------------------------------------------------------------*/
 /* strv_splitter */
 /*-----------------------------------------------------------------------*/
@@ -268,6 +273,42 @@ strv_is_email(strv sv)
 
     return true;
 }
+
+STRV_API bool
+strv_equals_newline_insensitive(strv left_str, strv right_str)
+{
+    char* left = (char*)left_str.data;
+    char* right = (char*)right_str.data;
+    char* left_end = (char*)left_str.data + left_str.size;
+    char* right_end = (char*)right_str.data + right_str.size;
+
+    for (;;)
+    {
+        if ((left[0] == '\r' || left[0] == '\n')
+            && (right[0] == '\r' || right[0] == '\n')) {
+
+            if (left[0] == '\r') ++left;
+            if (left[0] == '\n') ++left;
+
+            if (right[0] == '\r') ++right;
+            if (right[0] == '\n') ++right;
+        }
+
+        if (left >= left_end || right >= right_end) {
+            break;
+        }
+        
+        if (*left != *right) {
+            return false;
+        }
+
+        left += 1;
+        right += 1;
+    }
+
+    return *left == *right;
+}
+
 
 static bool
 char_is_alphanum(char c)

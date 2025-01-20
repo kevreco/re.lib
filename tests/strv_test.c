@@ -37,6 +37,7 @@ static void strv_extension_line_at_test();
 static void strv_extension_pop_line_test();
 static void strv_extension_get_surrounding_lines_test();
 static void strv_extension_is_email_test();
+void strv_extension_equals_new_line_insensitive_test();
 
 static void strv_tests()
 {
@@ -59,6 +60,7 @@ static void strv_tests()
     strv_extension_pop_line_test();
     strv_extension_get_surrounding_lines_test();
     strv_extension_is_email_test();
+    strv_extension_equals_new_line_insensitive_test();
 }
 
 static void strv_compare_test()
@@ -499,4 +501,87 @@ static void strv_extension_is_email_test()
     RUNIT_ASSERT(!strv_is_email(strv_from_str("aa@a.")));
     RUNIT_ASSERT(!strv_is_email(strv_from_str("a.aa@")));
     RUNIT_ASSERT(!strv_is_email(strv_from_str("a.a@a")));
+}
+
+void strv_extension_equals_new_line_insensitive_test()
+{
+    struct pair {
+        bool equals;
+        strv left;
+        strv right;
+    } pairs[] = {
+        { true, STRV(""), STRV("") },
+        { true, STRV("a"), STRV("a") },
+        { true, STRV("aa"), STRV("aa") },
+        
+        { false, STRV("\na"), STRV("a") }, 
+        { false, STRV("\ra"), STRV("a") },
+        { false, STRV("\r\na"), STRV("a") },
+        
+        { false, STRV("a\n"), STRV("a") },
+        { false, STRV("a\r"), STRV("a") },
+        { false, STRV("a\r\n"), STRV("a") },
+        
+        { false, STRV("a"), STRV("a\n") },
+        { false, STRV("a"), STRV("a\r") },
+        { false, STRV("a"), STRV("a\r\n") },
+        
+        { false, STRV("a\n"), STRV("a\n\n") },
+        { false, STRV("a\r"), STRV("a\n\n") },
+        { false, STRV("a\r\n"), STRV("a\r\r") },
+        
+        { false, STRV("a\r\n"), STRV("a\r\n\r\n") },
+        { false, STRV("a\r\nb"), STRV("a\r\nb\r\n") },
+        { false, STRV("a\r\rb"), STRV("a  b") },
+       
+        { false, STRV("a\n"), STRV("a\r\r") },
+        { false, STRV("a\r"), STRV("a\r\r") },
+        { false, STRV("a\r\n"), STRV("a\r\r") },
+        
+        { false, STRV("a\n"), STRV("a\n\r") },
+        { false, STRV("a\r"), STRV("a\n\r") },
+        { false, STRV("a\r\n"), STRV("a\n\r") },
+        
+        { true, STRV("\na"), STRV("\na") },
+        { true, STRV("\ra"), STRV("\na") },
+        { true, STRV("\r\na"), STRV("\na") },
+        
+        { true, STRV("\na"), STRV("\ra") },
+        { true, STRV("\ra"), STRV("\ra") },
+        { true, STRV("\r\na"), STRV("\ra") },
+        
+        { true, STRV("\na"), STRV("\r\na") },
+        { true, STRV("\ra"), STRV("\r\na") },
+        { true, STRV("\r\na"), STRV("\r\na") },
+        
+        { true, STRV("a\n"), STRV("a\n") },
+        { true, STRV("a\r"), STRV("a\n") },
+        { true, STRV("a\r\n"), STRV("a\n") },
+        
+        { true, STRV("a\n"), STRV("a\r") },
+        { true, STRV("b\r"), STRV("b\r") },
+        { true, STRV("c\r\n"), STRV("c\r") },
+        
+        { true, STRV("a\n"), STRV("a\r\n") },
+        { true, STRV("b\r"), STRV("b\r\n") },
+        { true, STRV("c\r\n"), STRV("c\r\n") },
+        
+        { true, STRV("\r\na"), STRV("\r\na") },
+        { false, STRV("\r\ra"), STRV("\r\na") },
+        
+        { false, STRV("\na"), STRV("\n\ra") },
+        { false, STRV("\ra"), STRV("\n\ra") },
+        { false, STRV("\r\na"), STRV("\n\ra") },
+        
+        { false, STRV("a    \r\nb"), STRV("a    b") },
+        { false, STRV("a ^\r\n"), STRV("a\n ^\n")},
+        
+        { false, {0,0}, {0,0}}
+    };
+
+    struct pair* p = pairs;
+    while(p->left.data) {
+        RUNIT_ASSERT(p->equals == strv_equals_newline_insensitive(p->left, p->right));
+        p += 1;
+    }
 }
