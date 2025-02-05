@@ -42,7 +42,9 @@ static void darr_map_insert_and_erase_test()
         map_item item = { i, i + 1 };
         RUNIT_ASSERT(darr_map_set(&map, &item));
         /* Replace value with the same value, it should not return true. */
-        RUNIT_ASSERT(!darr_map_set(&map, &item)); 
+        RUNIT_ASSERT(!darr_map_set(&map, &item));
+        map_item result;
+        RUNIT_ASSERT(darr_map_get(&map, &item, &result));
     }
 
     RUNIT_ASSERT(darr_map_size(&map) == 5);

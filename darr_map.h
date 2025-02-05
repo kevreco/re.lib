@@ -58,14 +58,14 @@ typedef struct darr_map darr_map;
 struct darr_map {
     darr arr;
     darr_size_t sizeof_item;
-    darr_predicate_t comp;
+    darr_predicate_t less;
 };
 
 /*-------------------------------------------------------------------------*/
 /* darr_map - API */
 /*-------------------------------------------------------------------------*/
 
-DARR_API void darr_map_init(darr_map* m, darr_size_t sizeof_item, darr_predicate_t comp);
+DARR_API void darr_map_init(darr_map* m, darr_size_t sizeof_item, darr_predicate_t less);
 DARR_API void darr_map_destroy(darr_map* m);
 
 DARR_API darr_bool darr_map_get(darr_map* m, const void* item, void* result);
@@ -86,14 +86,14 @@ DARR_API darr_size_t darr_map_size(const darr_map* m);
 #ifdef RE_DARR_MAP_IMPLEMENTATION
 
 DARR_API void
-darr_map_init(darr_map* m, darr_size_t sizeof_item, darr_predicate_t comp)
+darr_map_init(darr_map* m, darr_size_t sizeof_item, darr_predicate_t less)
 {
 	DARR_ASSERT(m);
-	DARR_ASSERT(comp);
+	DARR_ASSERT(less);
 
 	darr_init(&m->arr, sizeof_item);
 	m->sizeof_item = sizeof_item;
-	m->comp = comp;
+	m->less = less;
 }
 
 DARR_API void
@@ -101,13 +101,13 @@ darr_map_destroy(darr_map* m)
 {
 	darr_destroy(&m->arr);
 	m->sizeof_item = 0;
-	m->comp = 0;
+	m->less = 0;
 }
 
 DARR_API darr_bool
 darr_map_get(darr_map* m, const void* item, void* result)
 {
-	darr_size_t index = darr_binary_find_predicate(&m->arr, item, m->comp);
+	darr_size_t index = darr_binary_find_predicate(&m->arr, item, m->less);
 	if (index != m->arr.size)
 	{
 		DARR_MEMCPY(result, darr_ptr(&m->arr, index), m->sizeof_item);
@@ -120,7 +120,7 @@ darr_map_get(darr_map* m, const void* item, void* result)
 DARR_API darr_bool
 darr_map_set(darr_map* m, void* item)
 {
-	darr_size_t index = darr_binary_find_predicate(&m->arr, item, m->comp);
+	darr_size_t index = darr_binary_find_predicate(&m->arr, item, m->less);
 	if (index != m->arr.size)
 	{
 		DARR_MEMCPY(darr_ptr(&m->arr, index), item, m->sizeof_item);
@@ -128,7 +128,7 @@ darr_map_set(darr_map* m, void* item)
 	}
 	else
 	{
-		darr_insert_one_sorted(&m->arr, item, m->comp);
+		darr_insert_one_sorted(&m->arr, item, m->less);
 		return (darr_bool)1;
 	}
 }
@@ -136,7 +136,7 @@ darr_map_set(darr_map* m, void* item)
 DARR_API darr_bool
 darr_map_remove(darr_map* m, const void* item)
 {
-	darr_size_t index = darr_binary_find_predicate(&m->arr, item, m->comp);
+	darr_size_t index = darr_binary_find_predicate(&m->arr, item, m->less);
 	if (index != m->arr.size)
 	{
 		darr_erase_one(&m->arr, index);
@@ -149,7 +149,7 @@ darr_map_remove(darr_map* m, const void* item)
 DARR_API darr_bool
 darr_map_contains(const darr_map* m, const void* item)
 {
-	darr_size_t index = darr_binary_find_predicate(&m->arr, item, m->comp);
+	darr_size_t index = darr_binary_find_predicate(&m->arr, item, m->less);
 	return index != m->arr.size;
 }
 
