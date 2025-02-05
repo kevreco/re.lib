@@ -289,6 +289,9 @@ static void darrT_test()
         int* ptr = darrT_ptr(&values, i);
         RUNIT_ASSERT(*ptr == 0);
     }
+    
+    darrT_resize(&values, 1);
+    RUNIT_ASSERT(darrT_size(&values) == 1);
 
     darrT_destroy(&values);
 }
