@@ -266,10 +266,15 @@ strv_lexicagraphical_compare(strv left, strv right)
         left_char = *left.data++;
         right_char = *right.data++;
         if (left_char != right_char)
-            return left_char < right_char ? 1 : -1;
+            return left_char < right_char ? -1 : 1;
     };
 
-    return left.size - right.size;
+    if (left.size < right.size)
+        return -1;
+    else if (left.size > right.size)
+        return 1;
+
+    return 0;
 }
 
 STRV_API int

@@ -65,17 +65,28 @@ static void strv_tests()
 
 static void strv_compare_test()
 {
-    enum {
-        SIZE = 2
-    };
+    strv foo = strv_make_from_str("foo");
+    strv foooo = strv_make_from_str("foooo");
+    strv bar = strv_make_from_str("bar");
+    strv baz = strv_make_from_str("baz");
+    strv empty = strv_make_from_str("");
+    
+    strv foo2 = strv_make_from_str("foo");
+    strv empty2 = strv_make_from_str("");
 
-    strv str[SIZE] = {0};
+    RUNIT_ASSERT(strv_compare(empty, bar) < 0);
+    RUNIT_ASSERT(strv_compare(bar, baz) < 0);
+    RUNIT_ASSERT(strv_compare(baz, foo) < 0);
+    RUNIT_ASSERT(strv_compare(foo, foooo) < 0);
 
-    str[0] = strv_make_from_str("aaa");
-    str[1] =  strv_make_from_str("zzzzzz");
-
-    RUNIT_ASSERT(strv_compare(str[0], str[1]) != 0);
-    RUNIT_ASSERT(strv_compare(str[1], str[0]) != 0);
+    
+    RUNIT_ASSERT(strv_compare(foooo, foo) > 0);
+    RUNIT_ASSERT(strv_compare(foo, baz) > 0);
+    RUNIT_ASSERT(strv_compare(baz, bar) > 0);
+    RUNIT_ASSERT(strv_compare(bar, empty) > 0);
+    
+    RUNIT_ASSERT(strv_compare(foo, foo2) == 0);
+    RUNIT_ASSERT(strv_compare(empty, empty2) == 0);
 }
 
 static void strv_begin_and_end_test()
