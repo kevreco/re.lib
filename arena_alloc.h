@@ -66,12 +66,12 @@ EXAMPLE:
 #endif
 
 #ifndef RE_AA_MALLOC
-#include <string.h>
+#include <stdlib.h>
 #define RE_AA_MALLOC(x) malloc(x)
 #endif
 
 #ifndef RE_AA_FREE
-#include <string.h>
+#include <stdlib.h>
 #define RE_AA_FREE(x) free(x)
 #endif
 
@@ -109,7 +109,9 @@ struct re_arena {
     size_t chunk_min_capacity;
 };
 
-/* Initialize the arena, this does not allocate anything. */
+/* Initialize the arena, this does not allocate anything.
+   Chunk must be a power of two.
+*/
 RE_AA_API void re_arena_init(re_arena* a, size_t chunk_min_capacity);
 
 /* Destroy an arena. */
@@ -124,14 +126,27 @@ RE_AA_API void* re_arena_alloc(re_arena* a, size_t byte_size);
 /* Debug print some internal values. */
 RE_AA_API void re_arena_debug_print(re_arena* a);
 
+typedef struct re_arena_state re_arena_state;
+struct re_arena_state {
+    re_chunk* chunk;
+    size_t size;
+};
+
+/* Save where we are (int which chunk and at which position) in case we want to rollback. */
+RE_AA_API re_arena_state re_arena_save_state(re_arena* a);
+RE_AA_API void re_arena_rollback_state(re_arena* a, re_arena_state s);
+
 #endif /* RE_ARENA_ALLOC_H */
 
 #ifdef RE_AA_IMPLEMENTATION
 
+#include <string.h>
+#include <stdio.h>
+
 static re_chunk* alloc_chunk(size_t byte_size);
 static void free_chunk(re_chunk* b);
 
-static int is_power_of_two(size_t v);
+static size_t is_power_of_two(size_t v);
 static size_t align_up(size_t v, size_t byte_alignment);
 static size_t compute_capacity_to_allocate(re_arena* a, size_t byte_size);
 
@@ -139,6 +154,7 @@ RE_AA_API void
 re_arena_init(re_arena* a, size_t chunk_min_capacity)
 {
     RE_AA_ASSERT(is_power_of_two(chunk_min_capacity));
+    RE_AA_ASSERT(chunk_min_capacity > 0);
 
     memset(a, 0, sizeof(re_arena));
     a->chunk_min_capacity = chunk_min_capacity;
@@ -228,6 +244,33 @@ re_arena_debug_print(re_arena* a)
     printf("arena: block count: %zu, total size: %zu, total capacity : %zu \n", chunk_count, total_size, total_capacity);
 }
 
+RE_AA_API re_arena_state
+re_arena_save_state(re_arena* a)
+{
+    re_arena_state state;
+    state.chunk = a->last;
+    state.size = a->last->size;
+    return state;
+}
+
+RE_AA_API void
+re_arena_rollback_state(re_arena* a, re_arena_state state)
+{
+    state.chunk->size = state.size;
+
+    re_chunk* c = state.chunk->next;
+    
+    while (c)
+    {
+        c->size = 0;
+        c = c->next;
+    }
+
+    a->last = state.chunk;
+}
+
+#include "stdio.h"
+
 static re_chunk*
 alloc_chunk(size_t byte_size)
 {
@@ -314,7 +357,16 @@ free_chunk(re_chunk* b)
 #endif
 }
 
-static int
+static size_t
+next_power_of_two(size_t x) {
+    if (x <= 1) return 1;
+    int power = 2;
+    x--;
+    while (x >>= 1) power <<= 1;
+    return power;
+}
+
+static size_t
 is_power_of_two(size_t v)
 {
     return 0 == (v & (v - 1));
@@ -340,9 +392,10 @@ compute_capacity_to_allocate(re_arena* a, size_t byte_size)
     size_t capacity_to_allocate = a->chunk_min_capacity;
     while (byte_size >= capacity_to_allocate)
     {
-        capacity_to_allocate += a->chunk_min_capacity;
+        capacity_to_allocate *= 2;
     }
 
+    capacity_to_allocate = next_power_of_two(capacity_to_allocate);
     return capacity_to_allocate;
 }
 
