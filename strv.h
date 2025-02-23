@@ -52,6 +52,14 @@ EXAMPLE:
 extern "C" {
 #endif
 
+#ifndef STRV_FMT
+#define STRV_FMT "%.*s"
+#endif
+
+#ifndef STRV_ARG
+#define STRV_ARG(strv) (int) (strv).size, (strv).data
+#endif
+
 static const size_t STRV_NPOS = (size_t)-1;
 
 typedef struct strv strv;
