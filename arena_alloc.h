@@ -126,7 +126,7 @@ RE_AA_API void* re_arena_alloc(re_arena* a, size_t byte_size);
 /* Debug print some internal values. */
 RE_AA_API void re_arena_debug_print(re_arena* a);
 
-RE_AA_API void re_arena_allocated_chunk_count(re_arena* a);
+RE_AA_API size_t re_arena_allocated_chunk_count(re_arena* a);
 
 typedef struct re_arena_state re_arena_state;
 struct re_arena_state {
