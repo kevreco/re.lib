@@ -1,3 +1,5 @@
+
+#include "arena_alloc_test.h"
 #include "strv_test.h"
 #include "dstr_test.h"
 #include "darr_test.h"
@@ -6,6 +8,9 @@
 
 int main(void)
 {
+    if (!arena_alloc_test())
+        return -1;
+    
     if (!strv_test())
         return -1;
     
@@ -24,6 +29,7 @@ int main(void)
     return 0;
 }
 
+#include "arena_alloc_test.c"
 #include "strv_test.c"
 #include "dstr_test.c"
 #include "darr_test.c"
