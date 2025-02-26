@@ -386,8 +386,8 @@ free_chunk(re_chunk* c)
 
 #else
     /* NOTE: Alignment_offset is 0 if RE_AA_ALIGNMENT is not enabled */
-    char* ptr = (char*)b;
-    RE_AA_FREE(ptr - b->alignment_offset);
+    char* ptr = (char*)c;
+    RE_AA_FREE(ptr - c->alignment_offset);
 #endif
 }
 
