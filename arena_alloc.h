@@ -92,6 +92,8 @@ EXAMPLE:
 #endif
 #endif
 
+#include "stddef.h" /* ptrdiff_t */
+
 #define RE_AA_SIZEOF_CHUNK_ALIGNED (align_up(sizeof(re_chunk), RE_AA_ALIGNMENT))
 
 typedef struct re_chunk re_chunk;
