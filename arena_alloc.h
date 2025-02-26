@@ -159,7 +159,7 @@ RE_AA_API void
 re_arena_init(re_arena* a, size_t chunk_min_capacity)
 {
     RE_AA_ASSERT(is_power_of_two(chunk_min_capacity));
-    RE_AA_ASSERT(chunk_min_capacity > 0);
+    RE_AA_ASSERT(chunk_min_capacity > sizeof(re_arena));
 
     memset(a, 0, sizeof(re_arena));
     a->chunk_min_capacity = chunk_min_capacity;

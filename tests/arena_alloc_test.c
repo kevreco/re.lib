@@ -39,7 +39,8 @@ static void arena_alloc_tests()
     {
         re_arena_init(&a, 64);
     
-        void* mem = re_arena_alloc(&a, 16);
+        size_t size_to_next_bucket = 64 - sizeof(re_chunk);
+        void* mem = re_arena_alloc(&a, size_to_next_bucket - 16);
         RUNIT_ASSERT(a.last != NULL);
         RUNIT_ASSERT(a.first != NULL);
         RUNIT_ASSERT(a.first == a.last);
@@ -50,18 +51,19 @@ static void arena_alloc_tests()
     
     /* Can allocate big item */
     {
-        re_arena_init(&a, 32);
-        void* mem = re_arena_alloc(&a, 32 - sizeof(re_chunk));
+        re_arena_init(&a, 64);
+
+        size_t size_to_next_bucket = 64 - sizeof(re_chunk);
+
+        void* mem = arena_calloc(&a, size_to_next_bucket - 16);
         RUNIT_ASSERT(mem != NULL);
-        memset(mem, 0, 32 - sizeof(re_chunk));
     
         re_chunk* first_chunk = a.last;
     
-        RUNIT_ASSERT(first_chunk->size == 32);
+        RUNIT_ASSERT(first_chunk->size == 48);
         RUNIT_ASSERT(first_chunk->capacity == 64);
-        mem = re_arena_alloc(&a, 128 - sizeof(re_chunk));
+        mem = arena_calloc(&a, size_to_next_bucket * 2);
         RUNIT_ASSERT(mem != NULL);
-        memset(mem, 0, 128 - sizeof(re_chunk));
     
         RUNIT_ASSERT(a.last != NULL);
         RUNIT_ASSERT(a.first != NULL);
@@ -92,7 +94,6 @@ static void arena_alloc_tests()
 
         re_arena_state empty_state = re_arena_save_state(&a);
            
-        /* 32 (sizeof(re_chunk)) + 32 = 64, ok, first chunk. */
         size_t size_to_next_bucket = 64 - sizeof(re_chunk);
 
         void* mem = arena_calloc(&a, size_to_next_bucket);
@@ -119,7 +120,6 @@ static void arena_alloc_tests()
 
         RUNIT_ASSERT(a.last == NULL);
 
-        /* 32 (sizeof(re_chunk)) + 32 = 64, ok, first chunk. */
         size_t size_to_next_bucket = 64 - sizeof(re_chunk);
 
         void* mem = arena_calloc(&a, size_to_next_bucket);
