@@ -293,7 +293,7 @@ STRV_API bool
 strv_equals(strv sv, strv other)
 {
     return sv.size == other.size
-        && strv_compare(sv, other) == 0;
+        && memcmp(sv.data, other.data, sv.size) == 0;
 }
 
 STRV_API bool
