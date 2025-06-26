@@ -521,7 +521,17 @@ void strv_extension_equals_new_line_insensitive_test()
         strv left;
         strv right;
     } pairs[] = {
+
         { true, STRV(""), STRV("") },
+        
+        { true, STRV("\n"), STRV("\n") },
+        { true, STRV("\r\n"), STRV("\r\n") },
+        { true, STRV("\r"), STRV("\r") },
+        
+        { true, STRV("\n\n"), STRV("\r\n\r\n") },
+        { true, STRV("\n\n"), STRV("\r\n\r\n") },
+        { true, STRV("\r\r"), STRV("\r\n\r\n") },
+        
         { true, STRV("a"), STRV("a") },
         { true, STRV("aa"), STRV("aa") },
         
